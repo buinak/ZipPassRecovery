@@ -75,11 +75,10 @@ class BruteforcerListless(
             val range = getSubrange(i)
             Completable.fromAction {
                 val verifier = Verifier(path)
-                range.forEach { firstIndex ->
-                    val firstChar = allowedCharacters[firstIndex]
-                    allowedCharacters.forEach { secondChar ->
+                for (index in range) {
+                    for (secondIndex in 0 until allowedCharacters.size) {
                         iteration.getAndIncrement()
-                        val string = firstChar.toString() + secondChar.toString()
+                        val string = allowedCharacters[index].toString() + allowedCharacters[secondIndex].toString()
                         if (verifier.verify(string)) {
                             println("Password for file at $path === $string")
                             Runtime.getRuntime().exit(0)
@@ -97,19 +96,19 @@ class BruteforcerListless(
             val range = getSubrange(i)
             Completable.fromAction {
                 val verifier = Verifier(path)
-                range.forEach { firstIndex ->
-                    val firstChar = allowedCharacters[firstIndex]
-                    allowedCharacters.forEach { secondChar ->
-                        allowedCharacters.forEach { thirdChar ->
+                for (index in range) {
+                    for (secondIndex in 0 until allowedCharacters.size) {
+                        for (thirdIndex in 0 until allowedCharacters.size) {
                             iteration.getAndIncrement()
-                            val string = firstChar.toString() + secondChar.toString() + thirdChar.toString()
+                            val string = allowedCharacters[index].toString() +
+                                    allowedCharacters[secondIndex].toString() +
+                                    allowedCharacters[thirdIndex].toString()
                             if (verifier.verify(string)) {
                                 println("Password for file at $path === $string")
                                 Runtime.getRuntime().exit(0)
                             }
                         }
                     }
-
                 }
             }
                 .subscribeOn(Schedulers.computation())
@@ -122,25 +121,22 @@ class BruteforcerListless(
             val range = getSubrange(i)
             Completable.fromAction {
                 val verifier = Verifier(path)
-                range.forEach { firstIndex ->
-                    val firstChar = allowedCharacters[firstIndex]
-                    allowedCharacters.forEach { secondChar ->
-                        allowedCharacters.forEach { thirdChar ->
-                            allowedCharacters.forEach { fourthChar ->
+                for (index in range) {
+                    for (secondIndex in 0 until allowedCharacters.size) {
+                        for (thirdIndex in 0 until allowedCharacters.size) {
+                            for (fourthIndex in 0 until allowedCharacters.size) {
                                 iteration.getAndIncrement()
-                                val string = firstChar.toString() +
-                                        secondChar.toString() +
-                                        thirdChar.toString() +
-                                        fourthChar.toString()
+                                val string = allowedCharacters[index].toString() +
+                                        allowedCharacters[secondIndex].toString() +
+                                        allowedCharacters[thirdIndex].toString() +
+                                        allowedCharacters[fourthIndex].toString()
                                 if (verifier.verify(string)) {
                                     println("Password for file at $path === $string")
                                     Runtime.getRuntime().exit(0)
                                 }
                             }
-
                         }
                     }
-
                 }
             }
                 .subscribeOn(Schedulers.computation())
