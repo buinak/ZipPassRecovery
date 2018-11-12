@@ -11,6 +11,10 @@ fun main(args: Array<String>) {
     var charactersString = "Characters for usage: "
     list.forEach { charactersString += "$it, " }
     println(charactersString)
-
-    Bruteforcer(path, list, depth, true, printAll).start()
+    val amount = Math.pow(list.size.toDouble(), depth.toDouble()).toLong()
+//    if (amount >= 100000000) {
+        BruteforcerListless(path, depth, list, true, printAll).start()
+//    } else {
+//        Bruteforcer(path, list, depth, true, printAll).start()
+//    }
 }

@@ -21,9 +21,9 @@ class Bruteforcer(
         println("Creating a list of possible passwords for depth = $depth..")
         val passwords = getAllPossiblePasswords(depth)
         println("Maximum amount of iterations = ${passwords.size}")
-        val secondsMax = passwords.size / 5000
+        val secondsMax = passwords.size / 6500
         println("------------")
-        println("Assuming the speed of 5000 iterations per second, ")
+        println("Assuming the speed of 6500 iterations per second, ")
         println("The worst case scenario will take $secondsMax seconds, or ${secondsMax.toFloat() / 3600} hours.")
         println("------------")
 

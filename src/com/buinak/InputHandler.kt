@@ -20,6 +20,7 @@ object InputHandler {
         println("-l to include letters")
         println("-cl to include capital letters")
         println("-s to include special symbols")
+        println("-all to include all")
         return initialiseCharacterList(readLine()!!)
     }
 
@@ -38,7 +39,11 @@ object InputHandler {
     }
 
     private fun initialiseCharacterList(options: String): List<Char> {
-        val newOptions = if (options.isEmpty()) "-n -l" else options
+        val newOptions = when (options){
+            "" -> "-n -l"
+            "-all" -> "-n-l-cl-s"
+            else -> options
+        }
         val list = ArrayList<Char>()
         //adding lower case chars
         if (newOptions.contains("-l")) {
