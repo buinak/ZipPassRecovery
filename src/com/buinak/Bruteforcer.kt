@@ -1,10 +1,7 @@
 package com.buinak
 
 import io.reactivex.Completable
-import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
-import java.lang.RuntimeException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class Bruteforcer(
@@ -25,35 +22,55 @@ class Bruteforcer(
         val passwords = getAllPossiblePasswords(depth)
         println("Maximum amount of iterations = ${passwords.size}")
         val secondsMax = passwords.size / 5000
+        println("------------")
         println("Assuming the speed of 5000 iterations per second, ")
-        println("the worst case scenario will take $secondsMax seconds, or ${secondsMax / 3600} hours.")
+        println("The worst case scenario will take $secondsMax seconds, or ${secondsMax.toFloat() / 3600} hours.")
+        println("------------")
 
-        val cpuCount = Runtime.getRuntime().availableProcessors()
-        println("Allocating $cpuCount threads..")
-        for (i in 1..cpuCount) {
-            val subSize = passwords.size / cpuCount
-            val subRange = if (i != cpuCount) {
-                (subSize * (i - 1))..(subSize * i)
-            } else {
-                (subSize * (i - 1)) until passwords.size
-            }
-            when (printTried){
-                true -> startSearchInRangeWithPrinting(subRange, passwords)
-                false -> startSearchInRange(subRange, passwords)
-            }
+        val coreCount = (Runtime.getRuntime().availableProcessors()) * 2
+        println("Allocating $coreCount threads..")
+        for (coreIndex in 1..coreCount) {
+            subpartitionAndLaunchAsyncSearch(passwords, coreCount, coreIndex)
         }
 
         //print the number of iterations on the main thread
-        while (true){
-            val actSec = ++seconds
-            val average = iteration.get() / actSec
-            var percentage = (iteration.toFloat() / (passwords.size).toFloat()).toDouble() * 100
-            if (percentage < 0.01) percentage = 0.01
-            println("$iteration/${passwords.size} (${percentage.toString().substring(0, 4)})% passwords tried after $actSec seconds. On average $average per second.")
+        while (true) {
+            if (countIterations) {
+                val average = iteration.get() / ++seconds
+                var percentage = (iteration.toFloat() / (passwords.size).toFloat()).toDouble() * 100
+                if (percentage < 0.01) percentage = 0.01
+                println(
+                    "$iteration/${passwords.size} (${percentage.toString().substring(
+                        0,
+                        4
+                    )})% passwords tried after $seconds seconds. On average $average per second."
+                )
+            }
             Thread.sleep(1000)
+            if (iteration.get() > passwords.size) {
+                println()
+                println("Could not find a password, quitting..")
+                return
+            }
             if (finished) break
         }
-        readLine()
+    }
+
+    private fun subpartitionAndLaunchAsyncSearch(
+        passwords: ArrayList<String>,
+        cpuCount: Int,
+        i: Int
+    ) {
+        val subSize = passwords.size / cpuCount
+        val subRange = if (i != cpuCount) {
+            (subSize * (i - 1))..(subSize * i)
+        } else {
+            (subSize * (i - 1)) until passwords.size
+        }
+        when (printTried) {
+            true -> startSearchInRangeWithPrinting(subRange, passwords)
+            false -> startSearchInRange(subRange, passwords)
+        }
     }
 
     private fun startSearchInRange(
@@ -61,26 +78,10 @@ class Bruteforcer(
         passwords: ArrayList<String>
     ) {
         Completable.fromAction {
+            val verifier = Verifier(path)
             for (index in subRange) {
                 iteration.getAndIncrement()
-                if (Verifier.verify(path, passwords[index])) {
-                    finished = true
-                    println("Password to the zip archive at $path === ${passwords[index]}")
-                    Runtime.getRuntime().exit(0)
-                }
-            }
-        }.subscribeOn(Schedulers.computation())
-            .subscribe {}
-    }
-    private fun startSearchInRangeWithPrinting(
-        subRange: IntRange,
-        passwords: ArrayList<String>
-    ) {
-        Completable.fromAction {
-            for (index in subRange) {
-                iteration.getAndIncrement()
-                print(" ${passwords[index]} ")
-                if (Verifier.verify(path, passwords[index])) {
+                if (verifier.verify(passwords[index])) {
                     finished = true
                     println("Password to the zip archive at $path === ${passwords[index]}")
                     Runtime.getRuntime().exit(0)
@@ -90,14 +91,24 @@ class Bruteforcer(
             .subscribe {}
     }
 
-    private fun countIterations() {
-        Observable.interval(1, TimeUnit.SECONDS)
-            .filter { !finished }
-            .subscribe { second ->
-                val actSec = second + 1
-                val average = iteration.get() / actSec
-                println("Passwords tried after $actSec seconds = $iteration. On average, that is $average per second.")
+    private fun startSearchInRangeWithPrinting(
+        subRange: IntRange,
+        passwords: ArrayList<String>
+    ) {
+        Completable.fromAction {
+            val verifier = Verifier(path)
+            for (index in subRange) {
+                var ite = iteration.getAndIncrement()
+                if (ite % 20 == 0) println()
+                print(" ${passwords[index]} ")
+                if (verifier.verify(passwords[index])) {
+                    finished = true
+                    println("Password to the zip archive at $path === ${passwords[index]}")
+                    Runtime.getRuntime().exit(0)
+                }
             }
+        }.subscribeOn(Schedulers.computation())
+            .subscribe {}
     }
 
     private fun getAllPossiblePasswords(depth: Int): ArrayList<String> {

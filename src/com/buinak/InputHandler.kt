@@ -1,6 +1,7 @@
 package com.buinak
 
 import java.io.File
+import java.util.ArrayList
 
 object InputHandler {
     fun getFilePath(): String{
@@ -13,13 +14,51 @@ object InputHandler {
         return path
     }
 
-    fun getOptions(): String {
-        println("Enter input options in one line. Input options are:")
+    fun getCharacterList(): List<Char> {
+        println("Enter input options in one line. Default is -n -l Input options are:")
         println("-n to include digits")
         println("-l to include letters")
         println("-cl to include capital letters")
         println("-s to include special symbols")
-        return readLine()!!
+        return initialiseCharacterList(readLine()!!)
+    }
+
+    fun getPrintAllTries(): Boolean{
+        println("Would you like all the tried passwords printed? Y/N")
+        val appropriate = setOf("Y", "y", "N", "n")
+        var input = readLine()
+        while (input !in appropriate){
+            println("Invalid input. Would you like all the tried passwords printed? Y/N")
+            input = readLine()
+        }
+        return when (input){
+            in setOf<String>("Y", "y") -> true
+            else -> false
+        }
+    }
+
+    private fun initialiseCharacterList(options: String): List<Char> {
+        val newOptions = if (options.isEmpty()) "-n -l" else options
+        val list = ArrayList<Char>()
+        //adding lower case chars
+        if (newOptions.contains("-l")) {
+            for (i in 97..122) list.add(i)
+        }
+        //digits
+        if (newOptions.contains("-n")) {
+            for (i in 48..57) list.add(i)
+        }
+        //capital letters
+        if (newOptions.contains("-cl")) {
+            for (i in 65..90) list.add(i)
+        }
+        //symbols
+        if (newOptions.contains("-s")) {
+            for (i in 33..47) list.add(i)
+            for (i in 91..96) list.add(i)
+            for (i in 123..126) list.add(i)
+        }
+        return list
     }
 
     fun getDepth(): Int {
@@ -33,5 +72,8 @@ object InputHandler {
         if (depthNumber > 10) println("Maximum depth is 10").also { return 10 }
         return depthNumber
     }
+}
 
+fun ArrayList<Char>.add(char: Int) {
+    this.add(char.toChar())
 }
