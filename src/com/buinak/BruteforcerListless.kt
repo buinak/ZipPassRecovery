@@ -24,6 +24,7 @@ class BruteforcerListless(
     init {
         var mostOptimal: Int =
             if (availableProcessors >= allowedCharacters.size) allowedCharacters.size else availableProcessors
+
         var bestRemainder = allowedCharacters.size % mostOptimal
         for (i in mostOptimal downTo (availableProcessors / 2)){
             if (allowedCharacters.size % i < bestRemainder){
@@ -31,7 +32,7 @@ class BruteforcerListless(
                 mostOptimal = i
             }
         }
-        threadNumber = mostOptimal
+        threadNumber = if (availableProcessors > 4) mostOptimal else availableProcessors
     }
 
     fun start() {
