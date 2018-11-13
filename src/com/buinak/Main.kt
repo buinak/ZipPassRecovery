@@ -10,11 +10,10 @@ fun main(args: Array<String>) {
 
     var charactersString = "Characters for usage: "
     list.forEach { charactersString += "$it, " }
-    println(charactersString)
+    println(charactersString.trimEnd(','))
     val amount = Math.pow(list.size.toDouble(), depth.toDouble()).toLong()
-//    if (amount >= 100000000) {
-        BruteforcerListless(path, depth, list, true, printAll).start()
-//    } else {
-//        Bruteforcer(path, list, depth, true, printAll).start()
-//    }
+
+    //as opposed to the "normal" implementation, this one
+    //does not generate a list of passwords beforehand
+    BruteforcerListless(path, depth, list, true, printAll).start()
 }

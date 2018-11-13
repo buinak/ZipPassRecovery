@@ -6,6 +6,15 @@ import java.math.BigDecimal
 import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Finds the password for an encrypted zip archive using exhaustive search.
+ *
+ * Time complexity is O(n^l) where N is the number of characters used in the
+ * search and L is the length of the password.
+ *
+ * Space complexity is constant.
+ * The algorithm does not use data structures in order to function.
+ */
 class BruteforcerListless(
     val path: String,
     val depth: Int = 1,
@@ -21,6 +30,13 @@ class BruteforcerListless(
     private val availableProcessors = Runtime.getRuntime().availableProcessors()
     private val threadNumber: Int
 
+    /**
+     * Gets the optimal number of cores.
+     * It is important for the distribution as it is desired to achieve
+     * the most cores possible while distributing the work as evenly as possible.
+     *
+     * Might change in the future.
+     */
     init {
         var mostOptimal: Int =
             if (availableProcessors >= allowedCharacters.size) allowedCharacters.size else availableProcessors
@@ -59,6 +75,7 @@ class BruteforcerListless(
         if (depth >= 7) bruteforceSeven()
         if (depth >= 8) bruteforceEight()
 
+        //Counts iterations on the main thread, outputting the statistics every second.
         while (true) {
             if (countIterations) {
                 val average = iteration.get() / ++seconds
