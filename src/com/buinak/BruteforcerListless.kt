@@ -5,7 +5,9 @@ import io.reactivex.schedulers.Schedulers
 import java.lang.StringBuilder
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.HashMap
 
 /**
  * Finds the password for an encrypted zip archive using exhaustive search.
@@ -21,14 +23,16 @@ class BruteforcerListless(
     val depth: Int = 1,
     val allowedCharacters: List<Char>,
     private val countIterations: Boolean = false,
-    private val printTried: Boolean = false
+    private val printTried: Boolean = false,
+    private val distributeThreads: Boolean = false
 ) {
     private var finished = false
     private var seconds = 0
     private var iteration: AtomicInteger = AtomicInteger(0)
     private var total: BigInteger = BigInteger.valueOf(0)
-
+    private var currentDepth: Int = 0
     private val threadNumber: Int
+    private val depthFinishedCount = Collections.synchronizedMap(HashMap<Int, Int>())
 
     /**
      * Gets the optimal number of cores.
@@ -65,15 +69,18 @@ class BruteforcerListless(
 
         println("Input enter to start, any to exit. ")
         if (readLine() != "") return
+        if (distributeThreads) {
+            if (depth >= 1) bruteforceOne()
+            if (depth >= 2) bruteforceTwo()
+            if (depth >= 3) bruteforceThree()
+            if (depth >= 4) bruteforceFour()
+            if (depth >= 5) bruteforceFive()
+            if (depth >= 6) bruteforceSix()
+            if (depth >= 7) bruteforceSeven()
+            if (depth >= 8) bruteforceEight()
+            if (depth >= 8) bruteforceNine()
+        } else if (depth >= 1) startExhaustiveSearch(1)
 
-        if (depth >= 1) bruteforceOne()
-        if (depth >= 2) bruteforceTwo()
-        if (depth >= 3) bruteforceThree()
-        if (depth >= 4) bruteforceFour()
-        if (depth >= 5) bruteforceFive()
-        if (depth >= 6) bruteforceSix()
-        if (depth >= 7) bruteforceSeven()
-        if (depth >= 8) bruteforceEight()
 
         //Counts iterations on the main thread, outputting the statistics every second.
         var lastIterations = 0
@@ -85,7 +92,7 @@ class BruteforcerListless(
                     continue
                 }
                 var lastSecond: Int = 0
-                if (lastIterations == 0){
+                if (lastIterations == 0) {
                     lastIterations = iteration.get()
                     lastSecond = lastIterations
                 } else {
@@ -96,14 +103,16 @@ class BruteforcerListless(
                 val remaining = (total - BigInteger.valueOf(iteration.get().toLong()))
                 val remainingInSeconds = remaining.toLong() / average
                 if (percentage < 0.01) percentage = 0.01
-                println(
+                print(
                     "$iteration/${total} (${percentage.toString().substring(
                         0,
                         4
                     )})% passwords tried after $seconds seconds. $lastSecond iterations in last second." +
-                            " ETA to finish = ${remainingInSeconds + 1} seconds"
-                )
+                            " ETA to finish = ${remainingInSeconds + 1} seconds. "
 
+                )
+                if (currentDepth != 0) print("Current depth = $currentDepth")
+                println()
             }
             Thread.sleep(1000)
             if (total - BigInteger.valueOf(iteration.get().toLong()) <= BigInteger.valueOf(0)) {
@@ -112,6 +121,30 @@ class BruteforcerListless(
                 return
             }
             if (finished) break
+        }
+    }
+
+    private fun startExhaustiveSearch(depth: Int) {
+        currentDepth = depth
+        when (depth) {
+            1 -> bruteforceOne()
+            2 -> bruteforceTwo()
+            3 -> bruteforceThree()
+            4 -> bruteforceFour()
+            5 -> bruteforceFive()
+            6 -> bruteforceSix()
+            7 -> bruteforceSeven()
+            8 -> bruteforceEight()
+            9 -> bruteforceNine()
+        }
+    }
+
+    private fun finishedExhaustiveSearch(depth: Int){
+        var count = depthFinishedCount.getOrDefault(depth, 0)
+        if (count == 0) depthFinishedCount[depth] = 1 else depthFinishedCount[depth] = ++count
+        if (count == threadNumber){
+            println("Finished searching at depth = $depth")
+            if (depth < this.depth) startExhaustiveSearch(depth + 1)
         }
     }
 
@@ -128,6 +161,7 @@ class BruteforcerListless(
                         Runtime.getRuntime().exit(0)
                     }
                 }
+                finishedExhaustiveSearch(1)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -153,6 +187,7 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(2)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -181,6 +216,7 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(3)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -212,6 +248,7 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(4)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -246,6 +283,7 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(5)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -283,6 +321,7 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(6)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -323,6 +362,7 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(7)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
@@ -366,18 +406,57 @@ class BruteforcerListless(
                         }
                     }
                 }
+                finishedExhaustiveSearch(8)
             }
                 .subscribeOn(Schedulers.computation())
                 .subscribe { }
         }
     }
 
-    private fun getSubrange(i: Int): IntRange {
-        val step = if ((allowedCharacters.size / threadNumber) < 0) 1 else (allowedCharacters.size / threadNumber)
-        return if (i != threadNumber) {
-            (step * (i - 1))..(step * i)
-        } else {
-            (step * (i - 1)) until allowedCharacters.size
+    private fun bruteforceNine() {
+        val sublist = getSublists(threadNumber)
+        for (list in sublist) {
+            Completable.fromAction {
+                val verifier = Verifier(path)
+                for (character in list) {
+                    for (secondIndex in 0 until allowedCharacters.size) {
+                        for (thirdIndex in 0 until allowedCharacters.size) {
+                            for (fourthIndex in 0 until allowedCharacters.size) {
+                                for (fifthIndex in 0 until allowedCharacters.size) {
+                                    for (sixthIndex in 0 until allowedCharacters.size) {
+                                        for (seventhIndex in 0 until allowedCharacters.size) {
+                                            for (eighthIndex in 0 until allowedCharacters.size) {
+                                                for (ninthIndex in 0 until allowedCharacters.size) {
+                                                    iteration.getAndIncrement()
+                                                    val builder = StringBuilder()
+                                                    builder.append(character)
+                                                        .append(allowedCharacters[secondIndex])
+                                                        .append(allowedCharacters[thirdIndex])
+                                                        .append(allowedCharacters[fourthIndex])
+                                                        .append(allowedCharacters[fifthIndex])
+                                                        .append(allowedCharacters[sixthIndex])
+                                                        .append(allowedCharacters[seventhIndex])
+                                                        .append(allowedCharacters[eighthIndex])
+                                                        .append(allowedCharacters[ninthIndex])
+                                                    val string = builder.toString()
+                                                    if (printTried) print(" $string ")
+                                                    if (verifier.verify(string)) {
+                                                        println("Password for file at $path === $string")
+                                                        Runtime.getRuntime().exit(0)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                finishedExhaustiveSearch(9)
+            }
+                .subscribeOn(Schedulers.computation())
+                .subscribe { }
         }
     }
 
@@ -399,15 +478,5 @@ class BruteforcerListless(
         }
 
         return resultList
-    }
-
-    private fun balancedStepList(countOfSteps: Int, totalCount: Int): List<Int> {
-        val remainer = totalCount % countOfSteps
-        var unbalancedStep = totalCount / countOfSteps
-        val list = ArrayList<Int>(countOfSteps)
-        if (unbalancedStep > 0) list.fill(unbalancedStep) else for (i in 1..countOfSteps) list.add(1)
-
-
-        return list
     }
 }

@@ -25,15 +25,29 @@ object InputHandler {
     }
 
     fun getPrintAllTries(): Boolean{
-        println("Would you like all the tried passwords printed? Y/N")
-        val appropriate = setOf("Y", "y", "N", "n")
+        println("Would you like all the tried passwords printed? Y/N (default: N)")
+        val appropriate = setOf("Y", "y", "N", "n", "")
         var input = readLine()
         while (input !in appropriate){
-            println("Invalid input. Would you like all the tried passwords printed? Y/N")
+            println("Invalid input. Would you like all the tried passwords printed? Y/N (default: N)")
             input = readLine()
         }
         return when (input){
-            in setOf<String>("Y", "y") -> true
+            in setOf("Y", "y") -> true
+            else -> false
+        }
+    }
+
+    fun getDistrubuteThreads(): Boolean{
+        println("Would you like all the depth searches concurrent or consequent? Y/N (default: N for consequent)")
+        val appropriate = setOf("Y", "y", "N", "n", "")
+        var input = readLine()
+        while (input !in appropriate){
+            println("Would you like all the depth searches concurrent or consequent? Y/N (default: N for consequent)")
+            input = readLine()
+        }
+        return when (input){
+            in setOf("Y", "y") -> true
             else -> false
         }
     }

@@ -7,8 +7,9 @@ fun main(args: Array<String>) {
     val depth = InputHandler.getDepth()
     val list = InputHandler.getCharacterList()
     val printAll = InputHandler.getPrintAllTries()
+    val distributeThreads = InputHandler.getDistrubuteThreads()
 
     //as opposed to the "normal" implementation, this one
     //does not generate a list of passwords beforehand
-    BruteforcerListless(path, depth, list, true, printAll).start()
+    BruteforcerListless(path, depth, list, true, printAll, distributeThreads).start()
 }
