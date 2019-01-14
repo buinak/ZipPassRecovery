@@ -12,8 +12,8 @@ import kotlin.collections.HashMap
 /**
  * Finds the password for an encrypted zip archive using exhaustive search.
  *
- * Time complexity is O(n^l) where N is the number of characters used in the
- * search and L is the length of the password.
+ * Time complexity is O(n^l) where n is the number of characters used in the
+ * search and l is the length of the password.
  *
  * Space complexity is constant.
  * The algorithm does not use data structures in order to function.
@@ -35,11 +35,7 @@ class BruteforcerListless(
     private val depthFinishedCount = Collections.synchronizedMap(HashMap<Int, Int>())
 
     /**
-     * Gets the optimal number of cores.
-     * It is important for the distribution as it is desired to achieve
-     * the most cores possible while distributing the work as evenly as possible.
-     *
-     * Might change in the future.
+     * Gets the maximum number of threads for allocation.
      */
     init {
         threadNumber = if (Runtime.getRuntime().availableProcessors() > allowedCharacters.size) {
